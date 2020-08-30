@@ -7,9 +7,8 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Checkout MAD-X source
-      shell: bash
-      run: |
-        mkdir src
-        git clone git://github.com/MethodicalAcceleratorDesign/MAD-X \
-          src/MAD-X -b ${{ inputs.madx_version }} --depth 1
+    - uses: actions/checkout@v2
+      with:
+        repository: MethodicalAcceleratorDesign/MAD-X
+        ref: ${{ inputs.madx_version }}
+        path: src/MAD-X
