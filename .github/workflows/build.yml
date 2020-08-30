@@ -13,7 +13,7 @@ jobs:
       - name: Build
         uses: docker://quay.io/pypa/manylinux1_i686
         with:
-          args: ./build_linux.sh
+          args: ./build_on_linux.sh
       - uses: actions/upload-artifact@v2
         with:
           name: linux32
@@ -28,7 +28,7 @@ jobs:
       - name: Build
         uses: docker://quay.io/pypa/manylinux1_x86_64
         with:
-          args: ./build_linux.sh
+          args: ./build_on_linux.sh
       - uses: actions/upload-artifact@v2
         with:
           name: linux64
@@ -56,7 +56,7 @@ jobs:
             mingw-w64-${{ matrix.arch }}-toolchain
             mingw-w64-${{ matrix.arch }}-cmake
 
-      - run: ./build_msys2.sh
+      - run: ./build_on_msys2.sh
       - uses: actions/upload-artifact@v2
         with:
           name: win${{ matrix.arch }}
