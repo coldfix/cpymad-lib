@@ -14,6 +14,8 @@ jobs:
         uses: docker://quay.io/pypa/manylinux1_i686
         with:
           args: ./build_on_linux.sh
+      - name: Check linked libraries
+        run: ldd dist/lib/madx.so
       - uses: actions/upload-artifact@v2
         with:
           name: linux32
@@ -29,6 +31,8 @@ jobs:
         uses: docker://quay.io/pypa/manylinux1_x86_64
         with:
           args: ./build_on_linux.sh
+      - name: Check linked libraries
+        run: ldd dist/lib/madx.so
       - uses: actions/upload-artifact@v2
         with:
           name: linux64
@@ -60,6 +64,10 @@ jobs:
 
       - uses: ./.github/checkout-madx
       - run: ./build_on_msys2.sh
+
+      - name: Check linked libraries
+        run: ldd dist/bin/madx.dll
+
       - uses: actions/upload-artifact@v2
         with:
           name: win${{ matrix.bits }}

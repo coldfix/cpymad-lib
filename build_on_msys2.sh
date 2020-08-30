@@ -15,3 +15,11 @@ cmake ../src/MAD-X -G "MinGW Makefiles" \
     -DMADX_X11=OFF
 
 cmake --build . --target install
+
+gcc -shared -s \
+    lib/libmadx.obj \
+    -L lib \
+    -static \
+    -lmadx -lDISTlib -lptc -lgc-lib \
+    -lstdc++ -lgfortran -lquadmath \
+    -o lib/madx.dll
