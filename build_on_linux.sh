@@ -22,11 +22,7 @@ cmake ../src/MAD-X \
 cmake --build . --target install
 
 cd ../dist
-
-gcc -shared -s \
-    lib/libmadx.a \
-    -L lib \
-    -static \
+gcc -shared -s -static -L lib \
     -lmadx -lDISTlib -lptc -lgc-lib \
     -lstdc++ -lgfortran -lquadmath \
     -o lib/madx.so

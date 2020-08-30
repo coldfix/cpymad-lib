@@ -16,10 +16,8 @@ cmake ../src/MAD-X -G "MinGW Makefiles" \
 
 cmake --build . --target install
 
-gcc -shared -s \
-    lib/libmadx.obj \
-    -L lib \
-    -static \
+cd ../dist
+gcc -shared -s -static -L lib \
     -lmadx -lDISTlib -lptc -lgc-lib \
     -lstdc++ -lgfortran -lquadmath \
     -o lib/madx.dll
