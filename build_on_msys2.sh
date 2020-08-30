@@ -4,7 +4,7 @@ set -ex
 mkdir build
 cd build
 
-call cmake ../src/MAD-X -G "MinGW Makefiles" \
+cmake ../src/MAD-X -G "MinGW Makefiles" \
     -DCMAKE_INSTALL_PREFIX=../dist \
     -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_SHARED_LIBS=OFF \
@@ -14,4 +14,4 @@ call cmake ../src/MAD-X -G "MinGW Makefiles" \
     -DMADX_FORCE_32=OFF \
     -DMADX_X11=OFF
 
-call cmake --build . --target install
+cmake --build . --target install
