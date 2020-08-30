@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: .github/checkout-madx
+      - uses: ./.github/checkout-madx
       - name: Build
         uses: docker://quay.io/pypa/manylinux1_i686
         with:
@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: .github/checkout-madx
+      - uses: ./.github/checkout-madx
       - name: Build
         uses: docker://quay.io/pypa/manylinux1_x86_64
         with:
@@ -45,7 +45,7 @@ jobs:
         shell: msys2 {0}
     steps:
       - uses: actions/checkout@v2
-      - uses: .github/checkout-madx
+      - uses: ./.github/checkout-madx
 
       - uses: msys2/setup-msys2@v2
         with:
