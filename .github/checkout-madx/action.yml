@@ -16,6 +16,6 @@ runs:
     - name: Extract MAD-X source
       shell: bash
       run: |
-        tar -xzf "$${{ inputs.madx_version }}.tar.gz" \
+        tar -xzf "${{ inputs.madx_version }}.tar.gz" \
           --one-top-level=src/MAD-X \
           --strip-components 1
