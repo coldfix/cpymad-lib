@@ -20,4 +20,4 @@ cd ../dist
 gcc -shared -s -static -L lib \
     -lmadx -lDISTlib -lptc -lgc-lib \
     -lstdc++ -lgfortran -lquadmath \
-    -o lib/madx.dll
+    -o bin/madx.dll
