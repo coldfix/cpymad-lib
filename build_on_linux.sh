@@ -1,7 +1,7 @@
 #! /usr/bin/env bash
 set -ex
-if [[ -d /opt/python/cp38-cp38m/bin ]]; then
-    PATH="/opt/python/cp38-cp38m/bin:$PATH"
+if [[ -d /opt/python/cp38-cp38/bin ]]; then
+    PATH="/opt/python/cp38-cp38/bin:$PATH"
 fi
 
 mkdir build
