@@ -7,15 +7,9 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Download MAD-X source
+    - name: Checkout MAD-X source
       shell: bash
-      run: |
-        REPO=https://github.com/MethodicalAcceleratorDesign/MAD-X
-        wget "$REPO/archive/${{ inputs.madx_version }}.tar.gz"
-
-    - name: Extract MAD-X source
-      shell: bash
-      run: |
-        tar -xzf "${{ inputs.madx_version }}.tar.gz" \
-          --one-top-level=src/MAD-X \
-          --strip-components 1
+    - run: |
+        mkdir src
+        git clone git://github.com/MethodicalAcceleratorDesign/MAD-X \
+          /src/MAD-X -b ${{ inputs.madx_version }} --depth 1

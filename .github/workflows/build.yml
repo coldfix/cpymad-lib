@@ -45,8 +45,6 @@ jobs:
         shell: msys2 {0}
     steps:
       - uses: actions/checkout@v2
-      - uses: ./.github/checkout-madx
-
       - uses: msys2/setup-msys2@v2
         with:
           update: true
@@ -56,6 +54,7 @@ jobs:
             mingw-w64-${{ matrix.arch }}-toolchain
             mingw-w64-${{ matrix.arch }}-cmake
 
+      - uses: ./.github/checkout-madx
       - run: ./build_on_msys2.sh
       - uses: actions/upload-artifact@v2
         with:
