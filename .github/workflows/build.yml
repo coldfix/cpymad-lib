@@ -5,7 +5,7 @@ on:
 
 jobs:
   linux32:
-    name: Linux (i686)
+    name: Linux (32, i686)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -22,7 +22,7 @@ jobs:
           path: dist
 
   linux64:
-    name: Linux (x86_64)
+    name: Linux (64, x86_64)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -44,10 +44,10 @@ jobs:
     strategy:
       matrix:
         include:
-          - arch: i686
-            bits: 32
-          - arch: x86_64
-            bits: 64
+          - bits: 32
+            arch: i686
+          - bits: 64
+            arch: x86_64
     defaults:
       run:
         shell: msys2 {0}
