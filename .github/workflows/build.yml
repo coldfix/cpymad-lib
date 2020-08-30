@@ -39,7 +39,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        arch: [32, 64]
+        arch: [i686, x86_64]
     defaults:
       run:
         shell: msys2 {0}
@@ -53,8 +53,8 @@ jobs:
           msystem: MINGW${{ matrix.arch }}
           install: >
             base-devel
-            mingw-w${{ matrix.arch }}-toolchain
-            mingw-w${{ matrix.arch }}-cmake
+            mingw-w64-${{ matrix.arch }}-toolchain
+            mingw-w64-${{ matrix.arch }}-cmake
 
       - run: ./build_msys2.sh
       - uses: actions/upload-artifact@v2
