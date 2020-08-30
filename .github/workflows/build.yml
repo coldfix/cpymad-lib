@@ -5,7 +5,7 @@ on:
 
 jobs:
   linux32:
-    name: Linux (32)
+    name: Linux (i686)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -20,7 +20,7 @@ jobs:
           path: dist
 
   linux64:
-    name: Linux (64)
+    name: Linux (x86_64)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
