@@ -1,0 +1,100 @@
+name: Build shared library
+on:
+  push:
+  pull_request:
+
+jobs:
+  prepare:
+    name: Download and prepare MAD-X sources
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set MAD-X release
+        run: |
+          MADX_VERSION=$(cat MADX_VERSION)
+          MADX_TARBALL=$MADX_VERSION.tar.gz
+          echo "::set-env name=MADX_VERSION::$MADX_VERSION"
+          echo "::set-env name=MADX_TARBALL::$MADX_TARBALL"
+
+      - name: Download MAD-X source
+        run: |
+          REPO=https://github.com/MethodicalAcceleratorDesign/MAD-X
+          wget "$REPO/archive/$MADX_TARBALL"
+
+      - name: Extract MAD-X source
+        run: |
+          tar -xzf "$MADX_TARBALL" \
+            --one-top-level=src/MAD-X \
+            --strip-components 1
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: src
+          path: src
+
+  linux32:
+    name: Linux 32bit
+    needs: prepare
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          name: src
+          path: src
+      - name: Build
+        uses: docker://quay.io/pypa/manylinux1_i686
+        with:
+          args: ./build_linux.sh
+      - uses: actions/upload-artifact@v2
+        with:
+          name: linux32
+          path: dist
+
+  linux64:
+    name: Linux 64bit
+    needs: prepare
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          name: src
+          path: src
+      - name: Build
+        uses: docker://quay.io/pypa/manylinux1_x86_64
+        with:
+          args: ./build_linux.sh
+      - uses: actions/upload-artifact@v2
+        with:
+          name: linux64
+          path: dist
+
+  windows:
+    name: Windows
+    needs: prepare
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        arch: [32, 64]
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          msystem: MINGW${{ matrix.arch }}
+          install: >
+            base-devel
+            mingw-w${{ matrix.arch }}-toolchain
+            mingw-w${{ matrix.arch }}-cmake
+
+      - uses: actions/download-artifact@v2
+        with:
+          name: src
+          path: src
+      - run: ./build_msys2.sh
+      - uses: actions/upload-artifact@v2
+        with:
+          name: win${{ matrix.arch }}
+          path: dist
