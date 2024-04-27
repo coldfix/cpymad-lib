@@ -4,15 +4,13 @@ on:
   pull_request:
 
 jobs:
-  # Quickly check with flake8 without having to go through the whole build:
+  # Use flake8 to check setup.py
   flake8:
-    name: "Fast flake8"
+    name: "Flake8"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # Check on lowest supported python version to catch syntax errors:
       - uses: actions/setup-python@v5
-        with: { python-version: "3.7" }
       - run: pip install flake8
       - run: flake8
 
@@ -27,23 +25,6 @@ jobs:
           - manylinux2014_aarch64
     steps:
       - uses: actions/checkout@v4
-      - run: echo "MADX_VERSION=$(cat MADX_VERSION)" >> $GITHUB_ENV
-
-      - name: Download cached MAD-X build
-        id: madx-build-cache
-        uses: actions/cache@v4
-        with:
-          path: src/MAD-X/dist
-          key: "\
-            madx-${{ env.MADX_VERSION }}-\
-            ${{ matrix.base }}-\
-            patches-${{ hashFiles('.github/patch/*') }}-\
-            scripts-${{ hashFiles('.github/build/linux/madx*') }}\
-          "
-
-      - run: git clone https://github.com/MethodicalAcceleratorDesign/MAD-X
-          src/MAD-X -b $MADX_VERSION --depth 1
-        if: steps.madx-build-cache.outputs.cache-hit != 'true'
 
       - name: Set up QEMU for running arm64 containers
         if: endsWith(matrix.base, '_aarch64')
@@ -51,7 +32,7 @@ jobs:
 
       - name: Prepare docker image
         run: |
-          docker buildx build .github/build/linux \
+          docker buildx build ./manylinux \
             --build-arg UID=`id -u` \
             --build-arg GID=`id -g` \
             --build-arg BASE=${{ matrix.base }} \
@@ -59,29 +40,13 @@ jobs:
         shell: bash
 
       - name: Build MAD-X
-        if: steps.madx-build-cache.outputs.cache-hit != 'true'
         run: |
           docker run --rm --init \
             -w /mnt \
             -v `pwd`:/mnt \
             builder \
-            .github/build/linux/madx.sh src/MAD-X
+            ./build_madx_linx.sh
         shell: bash
-
-      - name: Build cpymad wheels
-        run: |
-          docker run --rm --init \
-            -w /mnt \
-            -v `pwd`:/mnt \
-            builder \
-            .github/build/linux/cpymad.sh src/MAD-X/dist
-        shell: bash
-
-      - name: Upload cpymad wheels
-        uses: actions/upload-artifact@v4
-        with:
-          name: dist-linux-${{ matrix.base }}
-          path: dist
 
   build_windows:
     name: "Build: Windows"
@@ -100,61 +65,11 @@ jobs:
                    mingw-w64-ucrt-x86_64-cmake
 
       - run: echo "MSYSTEM=UCRT64" >> $GITHUB_ENV
-      - run: echo "MADX_VERSION=$(cat MADX_VERSION)" >> $GITHUB_ENV
 
-      - name: Download cached MAD-X build
-        id: madx-build-cache
-        uses: actions/cache@v4
-        with:
-          path: src/MAD-X/dist
-          key: "\
-            madx-${{ env.MADX_VERSION }}-\
-            windows-\
-            patches-${{ hashFiles('.github/patch/*') }}-\
-            scripts-${{ hashFiles('.github/build/windows/madx*') }}\
-          "
-
-      - run: git clone https://github.com/MethodicalAcceleratorDesign/MAD-X
-          src/MAD-X -b $MADX_VERSION --depth 1
-        if: steps.madx-build-cache.outputs.cache-hit != 'true'
+      - run: pip install --upgrade cmake
 
       - name: Build MAD-X
-        if: steps.madx-build-cache.outputs.cache-hit != 'true'
-        run: .github/build/windows/madx.sh src/MAD-X
-
-      - uses: actions/setup-python@v5
-        with: {python-version: "3.6"}
-      - run: .github/build/windows/cpymad.sh src/MAD-X/dist 3.6
-
-      - uses: actions/setup-python@v5
-        with: {python-version: "3.7"}
-      - run: .github/build/windows/cpymad.sh src/MAD-X/dist 3.7
-
-      - uses: actions/setup-python@v5
-        with: {python-version: "3.8"}
-      - run: .github/build/windows/cpymad.sh src/MAD-X/dist 3.8
-
-      - uses: actions/setup-python@v5
-        with: {python-version: "3.9"}
-      - run: .github/build/windows/cpymad.sh src/MAD-X/dist 3.9
-
-      - uses: actions/setup-python@v5
-        with: {python-version: "3.10"}
-      - run: .github/build/windows/cpymad.sh src/MAD-X/dist 3.10
-
-      - uses: actions/setup-python@v5
-        with: {python-version: "3.11"}
-      - run: .github/build/windows/cpymad.sh src/MAD-X/dist 3.11
-
-      - uses: actions/setup-python@v5
-        with: {python-version: "3.12"}
-      - run: .github/build/windows/cpymad.sh src/MAD-X/dist 3.12
-
-      - name: Upload cpymad wheels
-        uses: actions/upload-artifact@v4
-        with:
-          name: dist-windows
-          path: dist
+        run: ./build_madx_msys2.sh
 
   build_macos:
     name: "Build: MacOS"
@@ -166,23 +81,6 @@ jobs:
           - arm64
     steps:
       - uses: actions/checkout@v4
-      - run: echo "MADX_VERSION=$(cat MADX_VERSION)" >> $GITHUB_ENV
-
-      - name: Download cached MAD-X build
-        id: madx-build-cache
-        uses: actions/cache@v4
-        with:
-          path: src/MAD-X/dist
-          key: "\
-            madx-${{ env.MADX_VERSION }}-\
-            macos-${{ matrix.arch }}-\
-            patches-${{ hashFiles('.github/patch/*') }}-\
-            scripts-${{ hashFiles('.github/build/macos/madx*') }}\
-          "
-
-      - run: git clone https://github.com/MethodicalAcceleratorDesign/MAD-X
-          src/MAD-X -b $MADX_VERSION --depth 1
-        if: steps.madx-build-cache.outputs.cache-hit != 'true'
 
       # Select matching Xcode and SDK, see: https://xcodereleases.com/
       - run: |
@@ -220,172 +118,9 @@ jobs:
           echo "LDFLAGS=$LDFLAGS" >> $GITHUB_ENV  # for setuptools
           echo "LIBDIR=$LIBDIR"   >> $GITHUB_ENV  # for delocate step
 
+      - run: pip install --upgrade cmake
+
       - name: Build MAD-X
-        if: steps.madx-build-cache.outputs.cache-hit != 'true'
-        run: .github/build/macos/madx.sh src/MAD-X ${{ matrix.arch }}
-
-      - uses: actions/setup-python@v5
-        with: { python-version: "3.6" }
-      - run: .github/build/macos/cpymad.sh src/MAD-X/dist
-
-      - uses: actions/setup-python@v5
-        with: { python-version: "3.7" }
-      - run: .github/build/macos/cpymad.sh src/MAD-X/dist
-
-      - uses: actions/setup-python@v5
-        with: { python-version: "3.8" }
-      - run: .github/build/macos/cpymad.sh src/MAD-X/dist
-
-      - uses: actions/setup-python@v5
-        with: { python-version: "3.9" }
-      - run: .github/build/macos/cpymad.sh src/MAD-X/dist
-
-      - uses: actions/setup-python@v5
-        with: { python-version: "3.10" }
-      - run: .github/build/macos/cpymad.sh src/MAD-X/dist
-
-      - uses: actions/setup-python@v5
-        with: { python-version: "3.11" }
-      - run: .github/build/macos/cpymad.sh src/MAD-X/dist
-
-      - uses: actions/setup-python@v5
-        with: { python-version: "3.12" }
-      - run: .github/build/macos/cpymad.sh src/MAD-X/dist
-
-      - name: Fixup wheel dependencies
-        run: |
-          pip3 install delocate
-          DYLD_LIBRARY_PATH=$LIBDIR delocate-wheel dist/*.whl
-          DYLD_LIBRARY_PATH=$LIBDIR delocate-listdeps --all dist/*.whl
-
-      - name: Upload cpymad wheels
-        uses: actions/upload-artifact@v4
-        with:
-          name: dist-macos-${{ matrix.arch }}
-          path: dist
-
-  test:
-    name: Tests
-    runs-on: ${{ matrix.os.run }}
-    needs: [build_linux, build_windows, build_macos]
-    strategy:
-      matrix:
-        os:
-          - {run: ubuntu-latest, dist: dist-linux-manylinux2014_x86_64}
-          - {run: windows-latest, dist: dist-windows}
-          - {run: macos-latest, dist: dist-macos-arm64}
-          - {run: macos-13, dist: dist-macos-x86_64}
-        python:
-          - '3.7'
-          - '3.8'
-          - '3.9'
-          - '3.10'
-          - '3.11'
-          - '3.12'
-        exclude:
-          - os: {run: macos-latest}
-            python: '3.7'
-
-    defaults:
-      run:
-        shell: bash
-
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python }}
-
-      - name: Download cpymad wheels
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ matrix.os.dist }}
-          path: dist
-
-      - name: Install cpymad from wheel
-        run: |
-          set -ex
-          python -m pip install -U pip || sudo python -m pip install -U pip
-          pip install cpymad -f dist --no-index --no-deps
-          pip install cpymad
-
-      - run: pip install flake8 twine coverage coveralls pytest
-      - run: twine check dist/*
-      - run: flake8
-
-      - run: coverage run --source=cpymad -p -m pytest -v -k "not dframe"
-      - run: pip install pandas
-      - run: coverage run --source=cpymad -p -m pytest -v -k "dframe"
-
-      - run: coverage combine
-      - run: coveralls
-        if: inputs.COVERALLS_REPO_TOKEN != ''
+        run: ./build_madx_macos.sh
         env:
-          COVERALLS_REPO_TOKEN: ${{ inputs.COVERALLS_REPO_TOKEN }}
-
-  documentation:
-    name: Update documentation
-    needs: build_linux
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.9'
-      - uses: actions/download-artifact@v4
-        with:
-          name: dist-linux-manylinux2014_x86_64
-          path: dist
-
-      - run: sudo apt-get install -qy graphviz
-      - run: pip install -U pip
-      - run: pip install cpymad[doc] -f dist
-      - run: make -C doc html
-
-      - name: Deploy to GitHub Pages
-        if: success() && (
-            startsWith(github.ref, 'refs/tags/v') ||
-            github.ref == 'refs/heads/master')
-        uses: crazy-max/ghaction-github-pages@v4
-        with:
-          build_dir: doc/_build/html
-          commit_message: Build documentation from ${{ github.ref }}@${{ github.sha }}
-          jekyll: false
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-
-  upload_release:
-    name: Upload release
-    needs: test
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
-
-    steps:
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-
-      - name: Fetch built distributions
-        uses: actions/download-artifact@v4
-        with:
-          path: dist
-
-      - name: Merge artifacts to single folder
-        run: |
-          mv dist/dist-*/*.whl dist/
-          mv dist/dist-linux-manylinux2014_x86_64/*.tar.gz dist/
-
-      - name: Install twine
-        run: pip install twine
-
-      - name: Publish PyPI package
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-        run: twine upload dist/*.whl dist/*.tar.gz
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/v')
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CMAKE_OSX_ARCHITECTURES: ${{ matrix.arch }}
